@@ -60,7 +60,7 @@ function spider(dom, topicId, topicPage) {
         thank: +regexGet(/(\d+) 人感谢/, dom.querySelector('.topic_buttons').innerText, 0),
         score: 0, //评分
 
-        content: dom.querySelector('.topic_content').innerHTML,
+        content: dom.querySelector('.topic_content') ? dom.querySelector('.topic_content').innerHTML : '',
         append: Array.prototype.map.call(dom.querySelectorAll('.subtle'), el => el.innerHTML),
         replys: Array.prototype.map.call(dom.querySelectorAll('[alt="❤️"]'), el => {
             let cell = el.closest('.cell')
@@ -84,15 +84,33 @@ function spider(dom, topicId, topicPage) {
     return topic
 }
 
+const SPIDER_VERSION = '1.0.2'
+// 1.0.0 首个记录版本
+// 1.0.1 请求失败自动重试
+
+// fetch 自动重试一次
+async function request(url, options) {
+    try {
+        return await fetch(url, options)
+    } catch (error) {
+        return await fetch(url, options)
+    }
+}
+
 async function get(url) {
-    return await fetch(url)
+    return await request(url, {
+        headers: {
+            'version': SPIDER_VERSION
+        }
+    })
 }
 
 async function post(url, data) {
-    return await fetch(url, {
+    return await request(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'version': SPIDER_VERSION
         },
         body: JSON.stringify(data)
     })
@@ -110,31 +128,18 @@ let endpoint = 'https://vdaily.huguotao.com'
 chrome.storage.sync.get("options", async (data) => {
 
     if (!data.options.vDaily) return
-    if (document.querySelector('.tools [href="/"]').innerHTML != '首页') return // 非中文语言
+    if (document.querySelector('.tools [href="/notes"]').innerHTML != '记事本') return // 非中文语言、未登录
 
     try {
-        let errorType = 'read' // 浏览
         let id = +regexGet(/\/t\/(\d+)/, location.pathname)
         let page = +regexGet(/p=(\d+)/, location.search, 1)
         let topic = spider(document.body, id, page)
         await postTopicInfo(topic)
-
-        let rep = await get(`${endpoint}/api/topic/task`)
-        let task = await rep.json()
-        if (!task.url) return
-
-        errorType = 'task' // 任务
-        let repHTML = await (await get(task.url)).text()
-        let dom = document.createElement('div')
-        dom.innerHTML = repHTML
-
-        topic = spider(dom, task.id, task.page)
-        await postTopicInfo(topic, task.sign)
     } catch (error) {
         console.error(error)
         await post(`${endpoint}/api/error/info`, {
-            type: errorType,
-            url: task.url,
+            type: 'read', // 浏览
+            url: location.href,
             error: error.stack,
             time: new Date()
         })

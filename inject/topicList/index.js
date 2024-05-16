@@ -74,7 +74,6 @@ chrome.storage.sync.get("options", async (data) => {
     }
 
     // vDaily 推荐主题和回复
-
     if (data.options.vDaily) {
         let TopicsHot = document.querySelector('#TopicsHot')
         if (!TopicsHot) return
@@ -101,6 +100,15 @@ chrome.storage.sync.get("options", async (data) => {
         topicTitle.innerText = 'vDaily 推荐主题'
         topicBox.append(topicTitle)
 
+
+        let more = document.createElement('a')
+        more.innerText = '更多'
+        more.classList.add('vdaily')
+        more.target = '_blank'
+        more.href = 'https://vdaily.huguotao.com'
+        replyTitle.append(more)
+        topicTitle.append(more.cloneNode(1))
+
         let topicList = await fetch('https://vdaily.huguotao.com/api/topic/recommend')
         topicList = await topicList.json()
         topicList.map(i => {
@@ -111,13 +119,13 @@ chrome.storage.sync.get("options", async (data) => {
             cell.append(a)
             a.href = `/t/${i['id']}`
             a.innerText = `${i['score']} - ${i['name']}`
+            a.target = '_blank'
             topicBox.append(cell)
         })
 
         let replyList = await fetch('https://vdaily.huguotao.com/api/reply/recommend')
         replyList = await replyList.json()
         replyList.map(i => {
-            console.log(i)
             let cell = document.createElement('div')
             cell.classList.add('cell', 'thank_reply')
             let a = document.createElement('a')
@@ -125,7 +133,10 @@ chrome.storage.sync.get("options", async (data) => {
             cell.append(a)
             a.href = `/t/${i['topicId']}?p=${i['topicPage']}#r_${i['id']}`
             a.innerHTML = `${i['thank']} - ${i['content']}`.replaceAll('<br>', ' ')
+            a.target = '_blank'
             replyBox.append(cell)
         })
+    } else {
+        document.querySelector('#my-recent-topics').style.display = 'block'
     }
 })

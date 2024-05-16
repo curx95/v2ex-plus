@@ -158,6 +158,30 @@
         </li>
         <li>
           <label class="item">
+            <div class="item-content">楼中楼模式<div class="item-content-tip">鼠标移入回复时以楼中楼的方式查看相关对话</div>
+            </div>
+            <div class="item-secondary">
+              <span class="toggle">
+                <input disabled name="nestedComment" type="checkbox">
+                <div></div>
+              </span>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="item">
+            <div class="item-content">楼中楼自动展开<div class="item-content-tip">不需要鼠标移入既可展开全部楼中楼</div>
+            </div>
+            <div class="item-secondary">
+              <span class="toggle">
+                <input disabled name="autoNestedComment" type="checkbox">
+                <div></div>
+              </span>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="item">
             <div class="item-content">图片解析<div class="item-content-tip">常见图床，并支持 3 种方式：图片URL、![]()、&lt;img /&gt;</div>
             </div>
             <div class="item-secondary">
@@ -216,7 +240,8 @@
         <li>
           <label class="item">
             <div class="item-content">启用 vDaily<div class="item-content-tip">
-                首页右侧栏将展示推荐主题，在浏览主题时会将基本信息提交到 vDaily，同时接受等量的爬取任务</div>
+                首页右侧栏将展示推荐主题、推荐回复，在浏览主题时提交主题数据到 vDaily 以做推荐及排行<br>
+                （不涉及用户隐私，不会提交 Cookie）</div>
             </div>
             <div class="item-secondary">
               <span class="toggle">
@@ -241,11 +266,32 @@
         </li>
         <li>
           <label class="item">
+            <div class="item-content reply-color">标记用户颜色<div class="item-content-tip">自定义被标记用户的头像框颜色，以突出该用户</div>
+            </div>
+            <div class="item-secondary">
+              <input disabled name="markColor" type="color">
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="item">
             <div class="item-content">使用 sov2ex 搜索<div class="item-content-tip">替换V站默认搜索为sov2ex</div>
             </div>
             <div class="item-secondary">
               <span class="toggle">
                 <input disabled name="sov2ex" type="checkbox">
+                <div></div>
+              </span>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="item">
+            <div class="item-content">右键 sov2ex 搜索<div class="item-content-tip">右键增加使用 sov2ex 搜索</div>
+            </div>
+            <div class="item-secondary">
+              <span class="toggle">
+                <input disabled name="sov2exMenu" type="checkbox">
                 <div></div>
               </span>
             </div>
@@ -264,6 +310,7 @@
           </label>
         </li>
         <li>
+          <label class="item">
             <div class="item-content">双击返回顶部<div class="item-content-tip">双击任意位置返回顶部</div>
             </div>
             <div class="item-secondary">
@@ -283,6 +330,18 @@
                 <input disabled name="base64" type="checkbox">
                 <div></div>
               </span>
+            </div>
+          </label>
+        </li>
+        <li>
+          <label class="item link" id="cssStore">
+            <div class="item-content">样式商城<div class="item-content-tip">选择你喜欢的 CSS 样式，自定义你的 V2EX</div>
+            </div>
+            <div class="next">
+              <svg class="icon" viewBox="0 0 24 24">
+                <title>navigate_next</title>
+                <path d="M 10 9 L 10 15 L13 12 Z" fill="#757575"></path>
+              </svg>
             </div>
           </label>
         </li>

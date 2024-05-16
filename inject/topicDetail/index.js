@@ -91,12 +91,12 @@ chrome.storage.sync.get("options", async (data) => {
     // 高亮被标记用户
     data.options.userMarkList.map((item) => {
         document.querySelectorAll(`img[alt="${item}"]`).forEach(el => {
-            el.style.outline = '3px solid red'
+            el.style.outline = `3px solid ${data.options.markColor}`
         })
     })
 
     // 感谢爱心颜色
-    document.querySelectorAll('.small.fade').forEach((el) => {
+    document.querySelectorAll('.cell .small.fade').forEach((el) => {
         el.style.color = data.options.thankColor
     })
 
@@ -213,11 +213,56 @@ chrome.storage.sync.get("options", async (data) => {
             let username = RegExp("/member/(.+)").exec(el.href)
             if (!username) return
             username = username[1]
+            let cell = el.closest('.cell')
+            let btn = document.createElement('a')
+            btn.classList.add('thank')
+            btn.href = '#;'
+            btn.innerText = '会话详情'
+            let thankArea = cell.querySelector('.thank_area')
+            if (!thankArea) {
+                let fr = cell.querySelector('.fr')
+                thankArea = document.createElement('div')
+                thankArea.classList = 'thank_area'
+                fr.prepend(thankArea)
+            }
+            thankArea.append(' \u00A0 \u00A0 ', btn)
+            btn.addEventListener('click', () => {
+                let wrapper = document.createElement('div')
+                wrapper.classList.add('wrapper')
+                wrapper.innerHTML = '<div class="btn close">✕</div>'
+
+                let selfUsername = cell.querySelector('.avatar').alt
+                replies.map((i, idx) => {
+                    let sign = [selfUsername, username].indexOf(i['member']['username'])
+                    if (sign == -1) return
+                    let reply = document.createElement('div')
+                    reply.classList.add('reply')
+                    reply.innerHTML = i['content_rendered']
+                    reply.innerHTML += `<div class="relateReplyInfo">${i['member']['username']} 回复于${idx + 1}层</div>`
+                    wrapper.append(reply)
+                    if (sign == 1) {
+                        reply.style.float = 'left'
+                    }
+                    if (i['content_rendered'].indexOf('@') != -1) {
+                        if (i['content_rendered'].indexOf(selfUsername) == -1) {
+                            if (i['content_rendered'].indexOf(username) == -1) {
+                                reply.style.opacity = 0.3
+                            }
+                        }
+                    }
+                })
+
+                Array().forEach.call(document.body.children, el => el.style.filter = 'blur(6px)')
+                document.body.append(wrapper)
+                document.querySelector('.close').addEventListener('click', () => {
+                    wrapper.remove()
+                    Array().forEach.call(document.body.children, el => el.style.filter = '')
+                })
+            })
             el.addEventListener('mouseenter', (e) => {
                 if (el.dataset.isPopup) return clearTimeout(el.dataset.hidePopup)
                 el.dataset.isPopup = true
                 let content = '未找到相关回复'
-                let cell = el.closest('.cell')
                 let noNum = -1 // 初始化负一
 
                 // 如果有 #楼层号 则先判断楼层号是否为相关回复优先显示
@@ -238,7 +283,6 @@ chrome.storage.sync.get("options", async (data) => {
                     content += `<div class="relateReplyInfo"><a>查看双方对话</a>${username} 回复于${noNum + 1}层</div>`
                 }
 
-                // TODO 兼容 darktheme
                 // 显示弹框
                 let relateReply = document.createElement('div')
                 relateReply.classList.add("relateReply")
@@ -250,37 +294,7 @@ chrome.storage.sync.get("options", async (data) => {
                 relateReply.style.marginTop = '-8px'
 
                 document.querySelector('.relateReplyInfo a').addEventListener('click', () => {
-                    let wrapper = document.createElement('div')
-                    wrapper.classList.add('wrapper')
-                    wrapper.innerHTML = '<div class="btn close">✕</div>'
-
-                    let selfUsername = cell.querySelector('.avatar').alt
-                    replies.map((i, idx) => {
-                        let sign = [selfUsername, username].indexOf(i['member']['username'])
-                        if (sign == -1) return
-                        let reply = document.createElement('div')
-                        reply.classList.add('reply')
-                        reply.innerHTML = i['content_rendered']
-                        reply.innerHTML += `<div class="relateReplyInfo">${i['member']['username']} 回复于${idx + 1}层</div>`
-                        wrapper.append(reply)
-                        if (sign == 1) {
-                            reply.style.float = 'left'
-                        }
-                        if (i['content_rendered'].indexOf('@') != -1) {
-                            if (i['content_rendered'].indexOf(selfUsername) == -1) {
-                                if (i['content_rendered'].indexOf(username) == -1) {
-                                    reply.style.opacity = 0.3
-                                }
-                            }
-                        }
-                    })
-
-                    Array().forEach.call(document.body.children, el => el.style.filter = 'blur(6px)')
-                    document.body.append(wrapper)
-                    document.querySelector('.close').addEventListener('click', () => {
-                        wrapper.remove()
-                        Array().forEach.call(document.body.children, el => el.style.filter = '')
-                    })
+                    btn.click()
                 })
 
                 relateReply.addEventListener('mouseenter', (e) => {
@@ -297,6 +311,68 @@ chrome.storage.sync.get("options", async (data) => {
             }
 
             el.addEventListener('mouseleave', hidePopup)
+        })
+    }
+
+    if (data.options.nestedComment) {
+        document.querySelectorAll('div[id^=r_]').forEach(el => {
+            let nestedUser = el.querySelectorAll('.reply_content a[href^="/member"]')
+            nestedUser = Array().map.call(nestedUser, i => i.innerText)
+            if (!nestedUser.length) return
+
+            let nestedComment = document.createElement('div')
+            nestedComment.classList.add('nested')
+            if (data.options.autoNestedComment) {
+                nestedComment.classList.add('auto-nested')
+            }
+            el.append(nestedComment)
+
+            let selfUsername = el.querySelector('.avatar').alt
+            nestedUser.unshift(selfUsername)
+
+            replies.map((i, idx) => {
+                let sign = nestedUser.indexOf(i['member']['username'])
+                if (sign == -1) return
+
+                // 判断所有 @ 用户是否相关
+                if (i['content_rendered'].indexOf('@<a') != -1) {
+                    // 相关用户是否至少一位被 @
+                    let sign = false
+                    nestedUser.forEach(username => {
+                        sign = sign || i['content_rendered'].indexOf(username) != -1
+                    })
+                    // 判断是否一开始就 @ 其他用户
+                    let username = RegExp(`^@<a href="/member/(.+)"`).exec(i['content_rendered'])
+
+                    // 所有被 @ 用户都不相关且一开始就 @ 其他用户
+                    if (!sign && username) return
+                }
+
+                let comment = document.createElement('div')
+                comment.classList.add('comment', `comment_${i['member']['username']}`)
+                comment.innerHTML = `
+                    <div>
+                        <img class="avatar" src="${i['member']['avatar_large']}">
+                    </div>
+                    <div class='comment_content'>
+                        <p>${i['member']['username']}<span class="no">${idx + 1}</span></p>
+                        <div class='reply_content'>${i['content_rendered']}</div>
+                    </div>
+                `
+                nestedComment.append(comment)
+
+                comment.addEventListener('mouseenter', () => {
+                    el.querySelectorAll(`.comment_${i['member']['username']} .avatar`).forEach(el => {
+                        el.style.outline = '2px solid OrangeRed'
+                    })
+                })
+
+                comment.addEventListener('mouseleave', () => {
+                    el.querySelectorAll(`.comment_${i['member']['username']} .avatar`).forEach(el => {
+                        el.style.outline = '0px solid OrangeRed'
+                    })
+                })
+            })
         })
     }
 

@@ -24,36 +24,54 @@ chrome.runtime.onInstalled.addListener(async (e) => {
         chrome.notifications.create({
             type: "basic",
             iconUrl: "icon/icon38_msg.png",
-            title: "更新至 2.0.3",
-            message: "增加 vDaily 推荐主题及评论，数据在不断完善，如需反馈欢迎 @sciooga"
-        });
+            title: "更新至 2.1.1",
+            message: "新版默认关闭 vDaily，老版本同时关闭可按需手动开启，移除 vDaily 获取老主题数据的功能，如需反馈欢迎 @sciooga"
+        })
 
         // 2.0.0 checkin typo
         let data = await chrome.storage.sync.get("options")
-        if (data.options.chickin) {
-            let options = data.options
+        let options = data.options
+
+        if (options.chickin) {
             options.checkin = options.chickin
             chrome.storage.sync.set({ options })
         }
 
         // 2.0.3 增加新功能
-        if (!data.options.vDaily) {
-            let options = data.options
+        if (options.vDaily === undefined) {
             options.vDaily = 1
             chrome.storage.sync.set({ options })
         }
-    }
 
-    try {
-        // 增加 sov2ex 右键菜单
-        chrome.contextMenus.create({
-            id: "vplus.sov2ex",
-            title: "使用 sov2ex 搜索 '%s'",
-            contexts: ["selection"],
-        })
-    } catch (error) {
-        console.log('此错误可忽略')
-        console.error(error)
+        // 2.0.4 新增加功能
+        if (options.searchShortcut === undefined) {
+            options.searchShortcut = 1
+            chrome.storage.sync.set({ options })
+        }
+
+        // 2.0.6 新增加功能
+        if (!options.sov2exMenu) {
+            chrome.contextMenus.update(
+                "vplus.sov2ex", {
+                documentUrlPatterns: ['<all_urls>']
+            })
+        }
+
+        // 2.0.7 新增加功能
+        if (options.nestedComment === undefined) {
+            options.nestedComment = 1
+            chrome.storage.sync.set({ options })
+        }
+        if (options.markColor === undefined) {
+            options.markColor = '#ff0000'
+            chrome.storage.sync.set({ options })
+        }
+
+        // 2.1.1 版本重置 vDaily 为关闭
+        if (e.previousVersion && e.previousVersion == '2.1.0') {
+            options.vDaily = 0
+            chrome.storage.sync.set({ options })
+        }
     }
 })
 
